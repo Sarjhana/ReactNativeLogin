@@ -9,14 +9,15 @@
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Alert, Button, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import {createAppContainer, createStackNavigator } from 'react-navigation'
-import {AsyncStorage} from 'react-native';
+import { AsyncStorage, ActivityIndicator } from 'react-native';
 
 //type Props = {};
  class LoginScreen extends React.Component {
   constructor(){
     super();
     this.state = {
-      value: ''
+      value: '',
+      hasToken: false, isLoaded: false
     };
     this.handleChangeText = this.handleChangeText.bind(this);
     }
@@ -27,11 +28,30 @@ import {AsyncStorage} from 'react-native';
       });
       //Alert.alert(newText)
     }
-  
-  
-  
+    componentDidMount() {
+      AsyncStorage.getItem('id_token').then((token) => {
+        this.setState({ hasToken: token !== null, isLoaded: true })
+      });
+    }
+    async saveItem(item, selectedValue) {
+      try {
+        await AsyncStorage.setItem(item, selectedValue);
+      } catch (error) {
+      Alert.alert('AsyncStorage error: ' + error.message);
+      }
+    }
+ 
   render() {
+    if (!this.state.isLoaded){
+      return (
+        <ActivityIndicator />
+      )
+    } else {
+      if (this.state.hasToken){
+        this.props.navigation.navigate('HomeScreen');
+      }
     return (
+      
       <View style={styles.container}>
       <View style={styles.container1}>
         <Text style={styles.login}>LOGIN</Text>      
@@ -47,7 +67,9 @@ import {AsyncStorage} from 'react-native';
     <TouchableOpacity style={styles.button}
     onPress={() => { if(this.state.value === 'svce')
       { 
+        this.saveItem('id_token','1');
         this.props.navigation.navigate('Home');
+        
       }
       else{
         Alert.alert('Wrong')
@@ -59,6 +81,7 @@ import {AsyncStorage} from 'react-native';
   </View>
   </View>
     );
+  }
   }
 }
 
@@ -86,6 +109,19 @@ const RootStack = createStackNavigator(
     initialRouteName: 'Login',
   }
 );
+
+/*class Authentication extends Component {
+  async saveItem(item, selectedValue) {
+    try {
+      await AsyncStorage.setItem(item, selectedValue);
+    } catch (error) {
+    Alert.alert('AsyncStorage error: ' + error.message);
+    }
+  }
+}
+export default Authentication;
+
+*/
 const AppContainer = createAppContainer(RootStack);
 
 export default class App extends React.Component {
